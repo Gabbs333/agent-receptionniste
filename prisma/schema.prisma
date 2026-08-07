@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Lead {
+  id            String      @id @default(cuid())
+  phone         String      @unique
+  name          String?
+  language      String      @default("fr")
+  status        String      @default("new")
+  score         Int         @default(0)
+  budget        Int?
+  checkIn       DateTime?
+  checkOut      DateTime?
+  guests        Int?
+  roomType      String?
+  intent        String?
+  source        String?
+  lastMessageAt DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  messages      Message[]
+  offers        Offer[]
+  events        LeadEvent[]
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  leadId      String
+  direction   String
+  content     String
+  rawJson     String?
+  createdAt   DateTime @default(now())
+
+  lead        Lead     @relation(fields: [leadId], references: [id])
+}
+
+model Offer {
+  id          String   @id @default(cuid())
+  leadId      String
+  roomType    String
+  price       Int
+  currency    String   @default("XAF")
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  lead        Lead     @relation(fields: [leadId], references: [id])
+}
+
+model LeadEvent {
+  id          String   @id @default(cuid())
+  leadId      String
+  type        String
+  payload     String
+  createdAt   DateTime @default(now())
+
+  lead        Lead     @relation(fields: [leadId], references: [id])
+}
+
+model RoomType {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  capacity    Int
+  basePrice   Int
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  availabilities RoomAvailability[]
+}
+
+model RoomAvailability {
+  id         String   @id @default(cuid())
+  roomTypeId String
+  date       DateTime
+  available  Int      @default(0)
+  price      Int
+  currency   String   @default("XAF")
+  minNights  Int      @default(1)
+  status     String   @default("open")
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id])
+
+  @@unique([roomTypeId, date])
+}
