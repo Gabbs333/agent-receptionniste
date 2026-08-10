@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import { execSync } from "child_process";
 import { prisma } from "./db";
 import { analyzeMessage } from "./agent";
 import { scoreLead } from "./leadScoring";
@@ -375,6 +376,15 @@ app.get("/health", (_req, res) => {
 });
 
 // ==================== Start ====================
+
+// Auto-migrate database on startup
+try {
+  console.log("🔄 Running database migrations...");
+  execSync("npx prisma migrate deploy", { stdio: "inherit" });
+  console.log("✅ Migrations applied");
+} catch (err) {
+  console.error("⚠️ Migration failed (may be expected if DB is fresh):", String(err).slice(0, 200));
+}
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
