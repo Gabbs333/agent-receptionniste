@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { execSync } from "child_process";
 import { prisma } from "./db";
@@ -16,6 +17,7 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 app.use("/admin", adminRoutes);
 
 // ==================== WhatsApp Webhook Verification ====================

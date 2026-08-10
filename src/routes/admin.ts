@@ -6,8 +6,12 @@ const router = Router();
 
 // --- Auth middleware ---
 function requireAuth(req: Request, res: Response, next: Function) {
-  const key = req.headers["x-api-key"] ?? req.query["key"];
+  const key = req.headers["x-api-key"] ?? req.query["key"] ?? req.cookies?.auth;
   if (process.env.ADMIN_API_KEY && key === process.env.ADMIN_API_KEY) {
+    // Set cookie for subsequent requests (browser will auto-send it)
+    if (req.query["key"]) {
+      res.cookie("auth", process.env.ADMIN_API_KEY, { httpOnly: true, sameSite: "lax", maxAge: 86400000 });
+    }
     return next();
   }
   return res.status(401).json({ error: "Unauthorized" });
@@ -532,7 +536,8 @@ router.get("/availability-page", requireAuth, async (_req, res) => {
     try {
       const res = await fetch('/admin/availability', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': '${process.env.ADMIN_API_KEY}' },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
       if (res.ok) { showToast("Disponibilité enregistrée ✓", "success"); setTimeout(() => location.reload(), 800); }
@@ -542,7 +547,7 @@ router.get("/availability-page", requireAuth, async (_req, res) => {
   async function deleteAvailability(id) {
     if (!confirm("Supprimer cette disponibilité ?")) return;
     try {
-      const res = await fetch('/admin/availability/' + id, { method: 'DELETE', headers: { 'x-api-key': '${process.env.ADMIN_API_KEY}' } });
+      const res = await fetch('/admin/availability/' + id, { method: 'DELETE', credentials: 'include' });
       if (res.ok) { document.getElementById('row-' + id).remove(); showToast("Supprimé ✓", "success"); }
       else showToast("Erreur suppression", "error");
     } catch(e) { showToast("Erreur réseau", "error"); }

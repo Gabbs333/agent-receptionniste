@@ -9,12 +9,13 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-        "test": "jest",
-        "test:watch": "jest --watch"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
     "axios": "^1.7.0",
+    "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.0",
     "express": "^5.0.0",
@@ -23,6 +24,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
