@@ -381,11 +381,11 @@ app.get("/health", (_req, res) => {
 
 // Auto-migrate database on startup
 try {
-  console.log("🔄 Running database migrations...");
-  execSync("npx prisma migrate deploy", { stdio: "inherit" });
-  console.log("✅ Migrations applied");
+  console.log("🔄 Syncing database schema...");
+  execSync("npx prisma db push --skip-generate", { stdio: "inherit" });
+  console.log("✅ Database schema synced");
 } catch (err) {
-  console.error("⚠️ Migration failed (may be expected if DB is fresh):", String(err).slice(0, 200));
+  console.error("⚠️ Database sync failed:", String(err).slice(0, 300));
 }
 
 const port = process.env.PORT || 3000;
