@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { LlmProvider, LlmCompletionOptions } from "../types.js";
+import type { LlmProvider, LlmCompletionOptions } from "../types";
 
 /**
  * Generic provider for any OpenAI-compatible API.
