@@ -18,7 +18,9 @@ function requireAuth(req: Request, res: Response, next: Function) {
 /** GET /admin/leads — JSON list of leads */
 router.get("/leads", requireAuth, async (req, res) => {
   try {
-    const { status, minScore, search, limit = "50", offset = "0" } = req.query as Record<string, string>;
+    const { status, minScore, search } = req.query as Record<string, string | undefined>;
+    const limit = String(req.query.limit ?? "50");
+    const offset = String(req.query.offset ?? "0");
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
     if (minScore) where.score = { gte: Number(minScore) };
@@ -49,7 +51,7 @@ router.get("/leads", requireAuth, async (req, res) => {
 router.get("/leads/:id", requireAuth, async (req, res) => {
   try {
     const lead = await prisma.lead.findUnique({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       include: {
         messages: { orderBy: { createdAt: "asc" } },
         offers: { orderBy: { createdAt: "desc" } },
@@ -69,7 +71,7 @@ router.patch("/leads/:id", requireAuth, async (req, res) => {
   try {
     const { status, name, notes } = req.body;
     const lead = await prisma.lead.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: {
         ...(status ? { status } : {}),
         ...(name ? { name } : {}),
@@ -138,7 +140,7 @@ router.post("/availability", requireAuth, async (req, res) => {
 /** DELETE /admin/availability/:id */
 router.delete("/availability/:id", requireAuth, async (req, res) => {
   try {
-    await deleteAvailability(req.params.id);
+    await deleteAvailability(String(req.params.id));
     return res.status(204).send();
   } catch (err) {
     console.error(err);
@@ -339,7 +341,7 @@ router.get("/dashboard", requireAuth, async (_req, res) => {
 /** GET /admin/lead-detail/:id */
 router.get("/lead-detail/:id", requireAuth, async (req, res) => {
   const lead = await prisma.lead.findUnique({
-    where: { id: req.params.id },
+    where: { id: String(req.params.id) },
     include: {
       messages: { orderBy: { createdAt: "asc" } },
       offers: { orderBy: { createdAt: "desc" } },
@@ -347,13 +349,15 @@ router.get("/lead-detail/:id", requireAuth, async (req, res) => {
     },
   });
   if (!lead) return res.status(404).send("Lead not found");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const leadWithIncludes = lead as any;
 
   const stats = {
-    responseDelay: lead.messages.length >= 2
-      ? Math.round((lead.messages[1].createdAt.getTime() - lead.messages[0].createdAt.getTime()) / 60000)
+    responseDelay: leadWithIncludes.messages.length >= 2
+      ? Math.round((leadWithIncludes.messages[1].createdAt.getTime() - leadWithIncludes.messages[0].createdAt.getTime()) / 60000)
       : null,
-    totalMessages: lead.messages.length,
-    totalOffers: lead.offers.length,
+    totalMessages: leadWithIncludes.messages.length,
+    totalOffers: leadWithIncludes.offers.length,
     conversionRate: lead.status === "converted" ? "✅ Converti" : "En cours",
   };
 
@@ -393,9 +397,9 @@ router.get("/lead-detail/:id", requireAuth, async (req, res) => {
 </div>
 
 <div class="card">
-  <h3>💬 Conversation (${lead.messages.length} messages)</h3>
+  <h3>💬 Conversation (${leadWithIncludes.messages.length} messages)</h3>
   <div class="conversation">
-    ${lead.messages.map(m => `
+    ${leadWithIncludes.messages.map((m: any) => `
       <div class="msg ${m.direction}">
         <div>${m.content}</div>
         <div class="msg-meta">${m.direction} · ${m.createdAt.toLocaleString("fr-FR")}</div>
@@ -405,12 +409,12 @@ router.get("/lead-detail/:id", requireAuth, async (req, res) => {
 
 <div class="card">
   <h3>🏷 Offres générées</h3>
-  ${lead.offers.length === 0 ? "<p>Aucune offre</p>" : lead.offers.map(o => `<div style="margin-bottom:8px"><strong>${o.roomType}</strong> — ${o.price.toLocaleString("fr-FR")} ${o.currency}${o.notes ? `<br><small>${o.notes}</small>` : ""}</div>`).join("")}
+  ${leadWithIncludes.offers.length === 0 ? "<p>Aucune offre</p>" : leadWithIncludes.offers.map((o: any) => `<div style="margin-bottom:8px"><strong>${o.roomType}</strong> — ${o.price.toLocaleString("fr-FR")} ${o.currency}${o.notes ? `<br><small>${o.notes}</small>` : ""}</div>`).join("")}
 </div>
 
 <div class="card">
   <h3>📋 Événements</h3>
-  ${lead.events.length === 0 ? "<p>Aucun événement</p>" : lead.events.map(e => `<div style="margin-bottom:8px"><strong>${e.type}</strong> · ${e.createdAt.toLocaleString("fr-FR")}<br><pre>${e.payload}</pre></div>`).join("")}
+  ${leadWithIncludes.events.length === 0 ? "<p>Aucun événement</p>" : leadWithIncludes.events.map((e: any) => `<div style="margin-bottom:8px"><strong>${e.type}</strong> · ${e.createdAt.toLocaleString("fr-FR")}<br><pre>${e.payload}</pre></div>`).join("")}
 </div>
 
 </div></body></html>`);

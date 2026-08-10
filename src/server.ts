@@ -90,8 +90,8 @@ async function handleIncomingMessage(
   const text = extractMessageText(message, msgType);
 
   // Get contact name
-  const name =
-    (contact as Record<string, unknown>)?.profile?.name ?? null;
+  const profile = (contact as Record<string, unknown>).profile as Record<string, unknown> | undefined;
+  const name = (profile?.name as string) ?? null;
 
   // Mark as read
   try {
@@ -165,6 +165,8 @@ async function handleIncomingMessage(
       } catch {
         analysis = {
           intent: "other" as const,
+          language: "fr" as const,
+          needsHuman: false,
           reply: `Merci pour votre message ! Je ne peux pas traiter les ${msgType} pour le moment. Pouvez-vous m'écrire votre demande en texte ?`,
         };
       }
