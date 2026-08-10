@@ -76,7 +76,7 @@ export function getLlmProvider(): LlmProvider {
       ? (process.env["LOCAL_LLM_BASE_URL"] ?? "http://localhost:1234/v1")
       : preset.baseURL;
 
-  cachedProvider = new OpenAICompatibleProvider(apiKey, baseURL ?? undefined);
+  cachedProvider = new OpenAICompatibleProvider(apiKey ?? "", baseURL ?? undefined);
   cachedProviderName = providerName;
   return cachedProvider;
 }
