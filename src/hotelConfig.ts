@@ -2,14 +2,14 @@
  * Configuration de l'hôtel — modifiable sans toucher au code métier.
  */
 export const HOTEL = {
-  name: "Hôtel Conrad Grand Luxury",
+  name: "Conrad Grand Luxury Hotel",
   city: "Yaoundé",
   country: "Cameroun",
   currency: "FCFA",
   currencySymbol: "F CFA",
   timezone: "Africa/Douala",
   phone: "+237 6 90 00 00 00",
-  email: "reservation@conradgrandluxury.cm",
+  email: "reservation@conradgrandluxuryhotel.cm",
 
   /** Numéros WhatsApp de l'équipe humaine pour escalade */
   humanEscalationNumbers: ["237679769525", "237640513680"],
