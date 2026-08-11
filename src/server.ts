@@ -15,6 +15,11 @@ import adminRoutes from "./routes/admin";
 
 dotenv.config();
 
+// Anti-doublon : mémorise les IDs de messages déjà traités
+const processedMessages = new Set<string>();
+// Nettoie les anciens IDs toutes les 10 minutes pour éviter la fuite mémoire
+setInterval(() => { if (processedMessages.size > 1000) processedMessages.clear(); }, 600_000);
+
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
@@ -88,6 +93,13 @@ async function handleIncomingMessage(
   const phone = String(message.from ?? "");
   const messageId = String(message.id ?? "");
   const msgType = String(message.type ?? "unknown");
+
+  // Éviter les doublons : WhatsApp peut renvoyer le même message
+  if (processedMessages.has(messageId)) {
+    console.log(`⏭️ Message doublon ignoré: ${messageId}`);
+    return;
+  }
+  processedMessages.add(messageId);
 
   // Extract text content based on message type
   const text = extractMessageText(message, msgType);
