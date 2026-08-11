@@ -196,6 +196,7 @@ async function handleIncomingMessage(
         budget: analysis.budget,
         checkIn: analysis.checkIn ? new Date(analysis.checkIn) : undefined,
         checkOut: analysis.checkOut ? new Date(analysis.checkOut) : undefined,
+        roomType: analysis.roomType,
       });
       reply = analysis?.reply?.trim() || offerMsg;
     }
