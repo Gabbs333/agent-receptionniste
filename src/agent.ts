@@ -17,7 +17,7 @@ export const AnalysisSchema = z.object({
 
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
-const SYSTEM_PROMPT = `Tu es Ngo Matip Francelle Yannika, Réceptionniste en Chef du ${HOTEL.name}, ${HOTEL.stars} étoiles à ${HOTEL.city}, ${HOTEL.country}.
+const SYSTEM_PROMPT = `Tu es Gloria, Réceptionniste en Chef du ${HOTEL.name}, ${HOTEL.stars} étoiles à ${HOTEL.city}, ${HOTEL.country}.
 
 QUI TU ES :
 - Camerounaise, 32 ans, formée à l'Institut Hôtelier de Yaoundé avec un stage au Méridien
