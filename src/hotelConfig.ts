@@ -10,6 +10,9 @@ export const HOTEL = {
   timezone: "Africa/Douala",
   phone: "+237 6 90 00 00 00",
   email: "reservation@conradgrandluxury.cm",
+
+  /** Numéros WhatsApp de l'équipe humaine pour escalade */
+  humanEscalationNumbers: ["237679769525", "237640513680"],
   address: "Carrefour Beignets, Rue Manguiers, face Station Confex Oil, Yaoundé",
 
   /** Nombre total d'étoiles */

@@ -6,6 +6,7 @@ import { prisma } from "./db";
 import { analyzeMessage } from "./agent";
 import { scoreLead } from "./leadScoring";
 import { buildOfferMessage } from "./offerEngine";
+import { HOTEL } from "./hotelConfig";
 import {
   sendText,
   sendTyping,
@@ -228,7 +229,27 @@ async function handleIncomingMessage(
     // Handle human escalation
     if (analysis?.needsHuman) {
       reply =
-        "Merci. Votre demande est transmise à notre équipe pour prise en charge.";
+        "Merci. Votre demande est transmise à notre équipe pour prise en charge. Quelqu'un va vous recontacter dans les meilleurs délais.";
+
+      // Notifier l'équipe humaine sur WhatsApp
+      const escalationMsg = `🚨 *ESCALADE CLIENT*
+
+👤 *Nom:* ${name ?? "Non renseigné"}
+📞 *Tél:* ${phone}
+💬 *Demande:* ${analysis?.summary ?? text}
+🏷 *Statut:* ${lead.status}
+⭐ *Score:* ${lead.score}
+
+_Répondre directement à ce client sur WhatsApp._`;
+
+      for (const humanNumber of HOTEL.humanEscalationNumbers) {
+        try {
+          await sendText({ to: humanNumber, body: escalationMsg });
+          console.log(`📤 Escalade envoyée à ${humanNumber}`);
+        } catch (e) {
+          console.error(`❌ Échec escalade vers ${humanNumber}`);
+        }
+      }
       await prisma.leadEvent.create({
         data: {
           leadId: lead.id,
