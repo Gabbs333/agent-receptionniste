@@ -18,11 +18,12 @@ export const AnalysisSchema = z.object({
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
 function buildSystemPrompt(): string {
-  const now = new Date();
-  const dateLocale = now.toLocaleDateString("fr-FR", {
+  const fmt = new Intl.DateTimeFormat("fr-FR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
-    hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala",
+    hour: "2-digit", minute: "2-digit",
+    timeZone: HOTEL.timezone,
   });
+  const dateLocale = fmt.format(new Date());
 
   return `Tu es Gloria, Réceptionniste en Chef du ${HOTEL.name}, ${HOTEL.stars} étoiles à ${HOTEL.city}, ${HOTEL.country}.
 
