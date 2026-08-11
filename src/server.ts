@@ -17,8 +17,11 @@ dotenv.config();
 
 // Anti-doublon : mémorise les IDs de messages déjà traités
 const processedMessages = new Set<string>();
+// Anti-flood : dernière réponse envoyée par contact (évite les réponses en rafale)
+const lastReplyTime = new Map<string, number>();
+const MIN_REPLY_INTERVAL_MS = 30_000; // 30 secondes minimum entre deux réponses
 // Nettoie les anciens IDs toutes les 10 minutes pour éviter la fuite mémoire
-setInterval(() => { if (processedMessages.size > 1000) processedMessages.clear(); }, 600_000);
+setInterval(() => { if (processedMessages.size > 1000) { processedMessages.clear(); lastReplyTime.clear(); } }, 600_000);
 
 const app = express();
 app.use(express.json());
@@ -101,8 +104,17 @@ async function handleIncomingMessage(
   }
   processedMessages.add(messageId);
 
-  // Extract text content based on message type
+  // Extraire le contenu texte du message
   const text = extractMessageText(message, msgType);
+
+  // Ne pas traiter les messages sans contenu réel
+  if (!text || text.length < 2) {
+    console.log(`⏭️ Message ignoré (type=${msgType}, pas de contenu)`);
+    processedMessages.add(messageId);
+    return;
+  }
+
+  // Ne pas répondre à soi-même (messages sortants renvoyés par WhatsApp)
 
   // Get contact name
   const profile = (contact as Record<string, unknown>).profile as Record<string, unknown> | undefined;
@@ -273,7 +285,15 @@ async function handleIncomingMessage(
       },
     });
 
-    // Save and send reply
+    // Save and send reply (with cooldown to avoid spam)
+    const now = Date.now();
+    const lastReply = lastReplyTime.get(phone) ?? 0;
+    if (now - lastReply < MIN_REPLY_INTERVAL_MS) {
+      console.log(`⏭️ Réponse ignorée (cooldown actif pour ${phone})`);
+      return;
+    }
+    lastReplyTime.set(phone, now);
+
     await prisma.message.create({
       data: { leadId: lead.id, direction: "outbound", content: reply },
     });
