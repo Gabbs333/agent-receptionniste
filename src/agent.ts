@@ -4,14 +4,14 @@ import { buildHotelContext, HOTEL } from "./hotelConfig";
 
 export const AnalysisSchema = z.object({
   intent: z.enum(["reservation", "faq", "pricing", "support", "other"]),
-  guests: z.number().int().optional(),
-  budget: z.number().int().optional(),
-  roomType: z.string().optional(),
-  checkIn: z.string().optional(),
-  checkOut: z.string().optional(),
+  guests: z.number().int().nullish(),
+  budget: z.number().int().nullish(),
+  roomType: z.string().nullish(),
+  checkIn: z.string().nullish(),
+  checkOut: z.string().nullish(),
   language: z.enum(["fr", "en"]).default("fr"),
   needsHuman: z.boolean().default(false),
-  summary: z.string().optional(),
+  summary: z.string().nullish(),
   reply: z.string(),
 });
 
@@ -87,5 +87,8 @@ ${text}`;
     .replace(/\s*```$/, "")
     .trim();
 
-  return AnalysisSchema.parse(JSON.parse(jsonStr));
+  // Clean null values before parsing (LLMs sometimes return null instead of omitting)
+  const parsed = JSON.parse(jsonStr, (_, v) => v === null ? undefined : v);
+
+  return AnalysisSchema.parse(parsed);
 }
