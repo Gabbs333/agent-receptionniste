@@ -2,15 +2,15 @@
  * Configuration de l'hôtel — modifiable sans toucher au code métier.
  */
 export const HOTEL = {
-  name: "Hôtel Le Paradis",
-  city: "Abidjan",
-  country: "Côte d'Ivoire",
+  name: "Hôtel Conrad Grand Luxury",
+  city: "Yaoundé",
+  country: "Cameroun",
   currency: "FCFA",
   currencySymbol: "F CFA",
-  timezone: "Africa/Abidjan",
-  phone: "+225 01 02 03 04 05",
-  email: "contact@hotelleparadis.ci",
-  address: "Boulevard Lagunaire, Cocody, Abidjan",
+  timezone: "Africa/Douala",
+  phone: "+237 6 90 00 00 00",
+  email: "reservation@conradgrandluxury.cm",
+  address: "Carrefour Beignets, Rue Manguiers, face Station Confex Oil, Yaoundé",
 
   /** Nombre total d'étoiles (influence le ton du réceptionniste) */
   stars: 5,
@@ -18,18 +18,21 @@ export const HOTEL = {
   /** Langues parlées par l'agent */
   languages: ["fr", "en"] as const,
 
+  /** Réduction maximale que le réceptionniste peut accorder (%) */
+  maxDiscountPercent: 30,
+
   /** Services proposés */
   services: [
     "Wi-Fi haut débit gratuit",
-    "Climatisation",
-    "Piscine à débordement",
+    "Climatisation centrale",
+    "Piscine à débordement avec vue sur les collines",
     "Spa & Centre de bien-être",
     "Service en chambre 24h/24",
-    "Restaurant gastronomique Le Baobab",
-    "Bar lounge Le Rooftop",
+    "Restaurant gastronomique Le Manguier d'Or",
+    "Bar lounge Le Rooftop 237",
     "Navette aéroport gratuite",
     "Conciergerie personnalisée",
-    "Parking sécurisé",
+    "Parking sécurisé 24/7",
     "Salle de fitness",
     "Petit-déjeuner buffet inclus",
   ],
@@ -70,7 +73,7 @@ export const HOTEL = {
       totalQuantity: 2,
       capacity: 4,
       description:
-        "Notre suite d'exception de 80 m² avec chambre principale, salon, salle à manger privée, deux salles de bain en marbre, jacuzzi sur la terrasse. Vue imprenable sur la lagune. Service majordome inclus, Champagne de bienvenue.",
+        "Notre suite d'exception de 80 m² avec chambre principale, salon, salle à manger privée, deux salles de bain en marbre, jacuzzi sur la terrasse. Vue imprenable sur les collines de Yaoundé. Service majordome inclus, Champagne de bienvenue.",
     },
   },
 
@@ -84,7 +87,8 @@ export const HOTEL = {
  */
 export function buildHotelContext(): string {
   const roomLines = Object.entries(HOTEL.rooms).map(([key, room]) => {
-    return `• ${room.name} : ${room.basePrice.toLocaleString("fr-FR")} ${HOTEL.currency} / nuit (${room.totalQuantity} disponibles, max ${room.capacity} pers.) — ${room.description}`;
+    const minPrice = Math.round(room.basePrice * (1 - HOTEL.maxDiscountPercent / 100));
+    return `• ${room.name} : ${minPrice.toLocaleString("fr-FR")} - ${room.basePrice.toLocaleString("fr-FR")} ${HOTEL.currency} / nuit (${room.totalQuantity} disponibles, max ${room.capacity} pers.) — ${room.description}`;
   });
 
   return `🏨 INFORMATIONS HÔTEL — CONFIDENTIEL RÉCEPTIONNISTE
@@ -103,6 +107,14 @@ ${roomLines.join("\n\n")}
 
 🎁 SERVICES
 ${HOTEL.services.map((s) => "• " + s).join("\n")}
+
+💰 RÉDUCTION
+Tu peux accorder jusqu'à ${HOTEL.maxDiscountPercent}% de réduction sur les prix affichés, selon la durée du séjour et le nombre de personnes :
+- Séjour ≥ 7 nuits : jusqu'à -30%
+- Séjour ≥ 4 nuits : jusqu'à -20%
+- Séjour ≥ 2 nuits : jusqu'à -10%
+- Réservation de groupe (3+ chambres) : jusqu'à -30%
+(N'annonce jamais le pourcentage exact, applique-le naturellement dans le prix proposé.)
 
 📋 POLITIQUE D'ANNULATION
 ${HOTEL.cancellationPolicy}`;
