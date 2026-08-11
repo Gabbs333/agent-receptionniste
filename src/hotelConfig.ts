@@ -12,8 +12,8 @@ export const HOTEL = {
   email: "reservation@conradgrandluxury.cm",
   address: "Carrefour Beignets, Rue Manguiers, face Station Confex Oil, Yaoundé",
 
-  /** Nombre total d'étoiles (influence le ton du réceptionniste) */
-  stars: 5,
+  /** Nombre total d'étoiles */
+  stars: 4,
 
   /** Langues parlées par l'agent */
   languages: ["fr", "en"] as const,
@@ -21,20 +21,16 @@ export const HOTEL = {
   /** Réduction maximale que le réceptionniste peut accorder (%) */
   maxDiscountPercent: 30,
 
-  /** Services proposés */
+  /** Services réellement disponibles dans l'hôtel */
   services: [
-    "Wi-Fi haut débit gratuit",
-    "Climatisation centrale",
-    "Piscine à débordement avec vue sur les collines",
-    "Spa & Centre de bien-être",
-    "Service en chambre 24h/24",
-    "Restaurant gastronomique Le Manguier d'Or",
-    "Bar lounge Le Rooftop 237",
-    "Navette aéroport gratuite",
-    "Conciergerie personnalisée",
-    "Parking sécurisé 24/7",
-    "Salle de fitness",
-    "Petit-déjeuner buffet inclus",
+    "Wi-Fi haut débit gratuit dans tout l'établissement",
+    "Climatisation individuelle dans chaque chambre",
+    "Restaurant Premium Le Manguier d'Or (cuisine camerounaise et internationale)",
+    "Snack-Bar chic & lounge (ouvert le week-end, ambiance musicale)",
+    "Navette aéroport sur réservation",
+    "Parking privé sécurisé",
+    "Service de chambre 12h/24",
+    "Petit-déjeuner buffet offert",
   ],
 
   /** Check-in / Check-out */
@@ -49,7 +45,7 @@ export const HOTEL = {
       totalQuantity: 6,
       capacity: 2,
       description:
-        "Chambre élégante de 28 m² avec lit queen-size, bureau, salle de bain privative avec douche à l'italienne, vue sur le jardin. Wi-Fi, climatisation, minibar, coffre-fort, TV écran plat.",
+        "Chambre confortable de 28 m² avec lit queen-size, bureau, salle de bain privative, douche à l'italienne. Wi-Fi, climatisation, minibar, TV écran plat, coffre-fort. Vue sur le jardin.",
     },
     premium: {
       name: "Chambre Premium",
@@ -57,7 +53,7 @@ export const HOTEL = {
       totalQuantity: 6,
       capacity: 2,
       description:
-        "Chambre raffinée de 35 m² avec lit king-size, coin salon, balcon privé, salle de bain en marbre avec baignoire et douche séparées. Wi-Fi, climatisation, minibar, Nespresso, coffre-fort, TV 4K.",
+        "Chambre spacieuse de 35 m² avec lit king-size, coin salon, balcon privé. Salle de bain en marbre avec baignoire et douche. Wi-Fi, climatisation, minibar, machine Nespresso, TV 4K.",
     },
     suiteStandard: {
       name: "Suite Standard",
@@ -65,7 +61,7 @@ export const HOTEL = {
       totalQuantity: 2,
       capacity: 3,
       description:
-        "Suite spacieuse de 55 m² avec chambre séparée, salon, deux salles de bain, terrasse panoramique. Literie king-size, canapé convertible, bureau exécutif. Service de majordome sur demande.",
+        "Suite de 55 m² avec chambre séparée, salon privé, deux salles de bain, terrasse. Literie king-size, canapé-lit, bureau. Idéal pour les familles ou séjours prolongés.",
     },
     suitePremium: {
       name: "Suite Premium",
@@ -73,49 +69,48 @@ export const HOTEL = {
       totalQuantity: 2,
       capacity: 4,
       description:
-        "Notre suite d'exception de 80 m² avec chambre principale, salon, salle à manger privée, deux salles de bain en marbre, jacuzzi sur la terrasse. Vue imprenable sur les collines de Yaoundé. Service majordome inclus, Champagne de bienvenue.",
+        "Notre plus belle suite, 80 m² avec chambre principale, salon, salle à manger privée, deux salles de bain en marbre. Vue panoramique sur les collines de Yaoundé. Service privilège inclus.",
     },
   },
 
   /** Politique d'annulation */
   cancellationPolicy:
     "Annulation gratuite jusqu'à 48h avant l'arrivée. Au-delà, la première nuit est facturée. Pour les suites Premium, annulation gratuite jusqu'à 72h avant.",
+
+  /** Positionnement marketing */
+  tagline: "Le haut standing à prix accessible, au cœur de Yaoundé.",
 } as const;
 
-/**
- * Construit un résumé textuel de toutes les chambres pour le prompt LLM.
- */
 export function buildHotelContext(): string {
   const roomLines = Object.entries(HOTEL.rooms).map(([key, room]) => {
-    const minPrice = Math.round(room.basePrice * (1 - HOTEL.maxDiscountPercent / 100));
-    return `• ${room.name} : ${minPrice.toLocaleString("fr-FR")} - ${room.basePrice.toLocaleString("fr-FR")} ${HOTEL.currency} / nuit (${room.totalQuantity} disponibles, max ${room.capacity} pers.) — ${room.description}`;
+    return `• ${room.name} : ${room.basePrice.toLocaleString("fr-FR")} ${HOTEL.currency}/nuit (${room.totalQuantity} dispo., max ${room.capacity} pers.) — ${room.description}`;
   });
 
-  return `🏨 INFORMATIONS HÔTEL — CONFIDENTIEL RÉCEPTIONNISTE
+  return `🏨 INFORMATIONS HÔTEL — CONFIDENTIEL RÉCEPTION
 
-Nom: ${HOTEL.name}
-Étoiles: ${"⭐".repeat(HOTEL.stars)}
+Nom: ${HOTEL.name} (${HOTEL.stars} étoiles)
 Adresse: ${HOTEL.address}
-Téléphone: ${HOTEL.phone}
-Email: ${HOTEL.email}
-Ville: ${HOTEL.city}, ${HOTEL.country}
-Monnaie: ${HOTEL.currency}
+Téléphone: ${HOTEL.phone} | Email: ${HOTEL.email}
 Check-in: ${HOTEL.checkInTime} | Check-out: ${HOTEL.checkOutTime}
+Positionnement: ${HOTEL.tagline}
 
-🛏️ CHAMBRES & SUITES
+🛏️ TARIFS OFFICIELS (à respecter scrupuleusement)
 ${roomLines.join("\n\n")}
+
+⚠️ RÈGLE TARIFAIRE STRICTE :
+- Le prix de base est ${roomLines[0]?.split(":")[0] ?? "la chambre standard"} à 25 000 FCFA/nuit
+- Tu PEUX accorder une réduction (max ${HOTEL.maxDiscountPercent}%) UNIQUEMENT si :
+  → Séjour ≥ 7 nuits : jusqu'à -30%
+  → Séjour ≥ 4 nuits : jusqu'à -20%
+  → Séjour ≥ 2 nuits : jusqu'à -10%
+  → Réservation de 3 chambres ou plus : jusqu'à -30%
+- N'annonce JAMAIS le pourcentage. Intègre-le naturellement : « pour un séjour de 5 nuits, je peux vous proposer un tarif préférentiel à 24 000 FCFA au lieu de 30 000 FCFA »
+- Ne JAMAIS réduire un prix déjà réduit
+- Le client qui demande pour 1-2 nuits paie le tarif normal — NE PAS lui accorder de réduction
 
 🎁 SERVICES
 ${HOTEL.services.map((s) => "• " + s).join("\n")}
 
-💰 RÉDUCTION
-Tu peux accorder jusqu'à ${HOTEL.maxDiscountPercent}% de réduction sur les prix affichés, selon la durée du séjour et le nombre de personnes :
-- Séjour ≥ 7 nuits : jusqu'à -30%
-- Séjour ≥ 4 nuits : jusqu'à -20%
-- Séjour ≥ 2 nuits : jusqu'à -10%
-- Réservation de groupe (3+ chambres) : jusqu'à -30%
-(N'annonce jamais le pourcentage exact, applique-le naturellement dans le prix proposé.)
-
-📋 POLITIQUE D'ANNULATION
+📋 ANNULATION
 ${HOTEL.cancellationPolicy}`;
 }
