@@ -431,6 +431,94 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// ==================== Rapport quotidien automatique ====================
+
+async function sendDailyReport() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  try {
+    const [totalLeads, newLeads, hotLeads, warmLeads, coldLeads, todayMessages, escalees] =
+      await Promise.all([
+        prisma.lead.count(),
+        prisma.lead.count({ where: { createdAt: { gte: today, lt: tomorrow } } }),
+        prisma.lead.count({ where: { status: "hot", lastMessageAt: { gte: today } } }),
+        prisma.lead.count({ where: { status: "warm", lastMessageAt: { gte: today } } }),
+        prisma.lead.count({ where: { status: "cold", lastMessageAt: { gte: today } } }),
+        prisma.message.count({ where: { createdAt: { gte: today, lt: tomorrow } } }),
+        prisma.lead.count({ where: { status: "needs_human", updatedAt: { gte: today } } }),
+      ]);
+
+    // Derniers leads actifs aujourd'hui
+    const activeLeads = await prisma.lead.findMany({
+      where: { lastMessageAt: { gte: today } },
+      orderBy: { score: "desc" },
+      take: 10,
+      select: { name: true, phone: true, status: true, score: true, intent: true },
+    });
+
+    const leadLines = activeLeads.map((l) =>
+      `${l.score >= 80 ? "🔥" : l.score >= 50 ? "🌤" : "❄"} ${l.name ?? l.phone} — ${l.intent ?? "?"} (${l.score}pts)`,
+    ).join("\n");
+
+    const report = `📊 *RAPPORT QUOTIDIEN — ${HOTEL.name}*
+📅 ${today.toLocaleDateString("fr-FR")}
+
+━━━━━━━━━━━━━━━━
+
+📈 *ACTIVITÉ DU JOUR*
+🆕 Nouveaux leads : ${newLeads}
+💬 Messages échangés : ${todayMessages}
+🚨 Escalades : ${escalees}
+
+🔥 Leads chauds actifs : ${hotLeads}
+🌤 Leads tièdes actifs : ${warmLeads}
+❄ Leads froids actifs : ${coldLeads}
+
+📋 *TOTAL BASE* : ${totalLeads} leads enregistrés
+
+━━━━━━━━━━━━━━━━
+
+👥 *LEADS ACTIFS AUJOURD'HUI*
+${leadLines || "Aucun lead actif aujourd'hui."}
+
+━━━━━━━━━━━━━━━━
+
+_Bonne soirée à toute l'équipe !_ 🏨✨`;
+
+    for (const humanNumber of HOTEL.humanEscalationNumbers) {
+      try {
+        await sendText({ to: humanNumber, body: report });
+        console.log(`📊 Rapport quotidien envoyé à ${humanNumber}`);
+      } catch (e) {
+        console.error(`❌ Échec rapport vers ${humanNumber}`);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Erreur génération rapport:", err);
+  }
+}
+
+// Planifier le rapport quotidien à 20h (heure du serveur UTC)
+function scheduleDailyReport() {
+  const now = new Date();
+  const reportHour = 20; // 20h UTC = 21h Yaoundé
+  const nextRun = new Date(now);
+  nextRun.setHours(reportHour, 0, 0, 0);
+  if (nextRun <= now) nextRun.setDate(nextRun.getDate() + 1);
+
+  const msUntilRun = nextRun.getTime() - now.getTime();
+  console.log(`📊 Rapport quotidien programmé dans ${Math.round(msUntilRun / 3600000)}h (${nextRun.toISOString()})`);
+
+  setTimeout(() => {
+    sendDailyReport();
+    // Ensuite toutes les 24h
+    setInterval(sendDailyReport, 86400000);
+  }, msUntilRun);
+}
+
 // ==================== Start ====================
 
 // Auto-migrate database on startup
@@ -453,4 +541,5 @@ app.listen(port, () => {
   console.log(
     `   Webhook: POST http://localhost:${port}/webhook (verify: GET)`,
   );
+  scheduleDailyReport();
 });
