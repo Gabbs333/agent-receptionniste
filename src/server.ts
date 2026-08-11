@@ -192,11 +192,11 @@ async function handleIncomingMessage(
     let reply = analysis?.reply ?? "";
     if (analysis?.intent === "reservation") {
       const offerMsg = await buildOfferMessage({
-        guests: analysis.guests,
-        budget: analysis.budget,
+        guests: analysis.guests ?? undefined,
+        budget: analysis.budget ?? undefined,
         checkIn: analysis.checkIn ? new Date(analysis.checkIn) : undefined,
         checkOut: analysis.checkOut ? new Date(analysis.checkOut) : undefined,
-        roomType: analysis.roomType,
+        roomType: analysis.roomType ?? undefined,
       });
       reply = analysis?.reply?.trim() || offerMsg;
     }
@@ -225,13 +225,13 @@ async function handleIncomingMessage(
 
     // Score the lead
     const score = scoreLead({
-      budget: analysis?.budget,
-      guests: analysis?.guests,
+      budget: analysis?.budget ?? undefined,
+      guests: analysis?.guests ?? undefined,
       checkIn: analysis?.checkIn ? new Date(analysis.checkIn) : undefined,
       checkOut: analysis?.checkOut ? new Date(analysis.checkOut) : undefined,
       responseDelayMinutes: 5,
       source: "whatsapp",
-      roomType: analysis?.roomType,
+      roomType: analysis?.roomType ?? undefined,
       intent: analysis?.intent,
     });
 
