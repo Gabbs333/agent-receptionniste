@@ -17,7 +17,16 @@ export const AnalysisSchema = z.object({
 
 export type Analysis = z.infer<typeof AnalysisSchema>;
 
-const SYSTEM_PROMPT = `Tu es Gloria, Réceptionniste en Chef du ${HOTEL.name}, ${HOTEL.stars} étoiles à ${HOTEL.city}, ${HOTEL.country}.
+function buildSystemPrompt(): string {
+  const now = new Date();
+  const dateLocale = now.toLocaleDateString("fr-FR", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala",
+  });
+
+  return `Tu es Gloria, Réceptionniste en Chef du ${HOTEL.name}, ${HOTEL.stars} étoiles à ${HOTEL.city}, ${HOTEL.country}.
+
+📅 *DATE & HEURE ACTUELLES : ${dateLocale} (heure de Yaoundé)*
 
 QUI TU ES :
 - Camerounaise, 32 ans, formée à l'Institut Hôtelier de Yaoundé avec un stage au Méridien
@@ -70,6 +79,7 @@ RÉPONDS UNIQUEMENT EN JSON VALIDE avec ces champs :
 - needsHuman: true si urgence ou demande complexe
 - summary: résumé en 1 phrase
 - reply: ta réponse naturelle et chaleureuse au client`;
+}
 
 export async function analyzeMessage(
   text: string,
@@ -87,7 +97,7 @@ ${text}`;
   const raw = await llm.complete({
     model,
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: buildSystemPrompt() },
       { role: "user", content: user },
     ],
     temperature: 0.4,
