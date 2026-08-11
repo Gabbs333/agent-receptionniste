@@ -450,24 +450,32 @@ async function sendDailyReport() {
         prisma.lead.count({ where: { status: "needs_human", updatedAt: { gte: today } } }),
       ]);
 
-    // Derniers leads actifs aujourd'hui
+    // Derniers leads actifs aujourd'hui avec résumé
     const activeLeads = await prisma.lead.findMany({
       where: { lastMessageAt: { gte: today } },
       orderBy: { score: "desc" },
       take: 10,
-      select: { name: true, phone: true, status: true, score: true, intent: true },
+      include: {
+        messages: { orderBy: { createdAt: "desc" }, take: 1, select: { content: true, direction: true } },
+      },
     });
 
-    const leadLines = activeLeads.map((l) =>
-      `${l.score >= 80 ? "🔥" : l.score >= 50 ? "🌤" : "❄"} ${l.name ?? l.phone} — ${l.intent ?? "?"} (${l.score}pts)`,
-    ).join("\n");
+    const leadLines = activeLeads.map((l) => {
+      const emoji = l.score >= 80 ? "🔥" : l.score >= 50 ? "🌤" : "❄";
+      const lastMsg = l.messages[0];
+      const preview = lastMsg
+        ? `${lastMsg.direction === "inbound" ? "💬" : "📤"} ${lastMsg.content.slice(0, 60)}${lastMsg.content.length > 60 ? "..." : ""}`
+        : l.intent ?? "—";
+      return `${emoji} *${l.name ?? l.phone}* (${l.score}pts)
+   ${preview}`;
+    }).join("\n");
 
     const report = `📊 *Rapport ${today.toLocaleDateString("fr-FR")}*
 
 🆕 ${newLeads} nouveaux | 💬 ${todayMessages} msg | 🚨 ${escalees} escalade${escalees > 1 ? "s" : ""}
 🔥 ${hotLeads} chauds | 🌤 ${warmLeads} tièdes | ❄ ${coldLeads} froids
 
-${leadLines ? leadLines : "Aucune activité aujourd'hui."}
+${leadLines ? `👥 *Aujourd'hui*\n${leadLines}` : "Aucune activité aujourd'hui."}
 
 _Bonne soirée !_ ✨`;
 
