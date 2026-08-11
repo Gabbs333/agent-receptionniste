@@ -455,7 +455,9 @@ async function sendDailyReport() {
       where: { lastMessageAt: { gte: today } },
       orderBy: { score: "desc" },
       take: 10,
-      include: {
+      select: {
+        name: true, phone: true, status: true, score: true, intent: true,
+        checkIn: true, checkOut: true, roomType: true, guests: true, budget: true,
         messages: { orderBy: { createdAt: "desc" }, take: 1, select: { content: true, direction: true } },
       },
     });
@@ -466,8 +468,20 @@ async function sendDailyReport() {
       const preview = lastMsg
         ? `${lastMsg.direction === "inbound" ? "💬" : "📤"} ${lastMsg.content.slice(0, 60)}${lastMsg.content.length > 60 ? "..." : ""}`
         : l.intent ?? "—";
+
+      // Réservation : afficher les détails
+      let details = "";
+      if (l.intent === "reservation" || (l.checkIn && l.checkOut)) {
+        const ci = l.checkIn ? new Date(l.checkIn).toLocaleDateString("fr-FR") : "?";
+        const co = l.checkOut ? new Date(l.checkOut).toLocaleDateString("fr-FR") : "?";
+        const rt = l.roomType ?? "?";
+        const g = l.guests ?? "?";
+        const b = l.budget ? `${l.budget.toLocaleString("fr-FR")} FCFA` : "?";
+        details = `   🛏 ${rt} · ${ci} → ${co} · ${g} pers · ${b}`;
+      }
+
       return `${emoji} *${l.name ?? l.phone}* (${l.score}pts)
-   ${preview}`;
+   ${preview}${details}`;
     }).join("\n");
 
     const report = `📊 *Rapport ${today.toLocaleDateString("fr-FR")}*
