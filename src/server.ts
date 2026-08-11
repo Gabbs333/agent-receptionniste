@@ -440,9 +440,8 @@ async function sendDailyReport() {
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   try {
-    const [totalLeads, newLeads, hotLeads, warmLeads, coldLeads, todayMessages, escalees] =
+    const [newLeads, hotLeads, warmLeads, coldLeads, todayMessages, escalees] =
       await Promise.all([
-        prisma.lead.count(),
         prisma.lead.count({ where: { createdAt: { gte: today, lt: tomorrow } } }),
         prisma.lead.count({ where: { status: "hot", lastMessageAt: { gte: today } } }),
         prisma.lead.count({ where: { status: "warm", lastMessageAt: { gte: today } } }),
@@ -463,30 +462,14 @@ async function sendDailyReport() {
       `${l.score >= 80 ? "🔥" : l.score >= 50 ? "🌤" : "❄"} ${l.name ?? l.phone} — ${l.intent ?? "?"} (${l.score}pts)`,
     ).join("\n");
 
-    const report = `📊 *RAPPORT QUOTIDIEN — ${HOTEL.name}*
-📅 ${today.toLocaleDateString("fr-FR")}
+    const report = `📊 *Rapport ${today.toLocaleDateString("fr-FR")}*
 
-━━━━━━━━━━━━━━━━
+🆕 ${newLeads} nouveaux | 💬 ${todayMessages} msg | 🚨 ${escalees} escalade${escalees > 1 ? "s" : ""}
+🔥 ${hotLeads} chauds | 🌤 ${warmLeads} tièdes | ❄ ${coldLeads} froids
 
-📈 *ACTIVITÉ DU JOUR*
-🆕 Nouveaux leads : ${newLeads}
-💬 Messages échangés : ${todayMessages}
-🚨 Escalades : ${escalees}
+${leadLines ? leadLines : "Aucune activité aujourd'hui."}
 
-🔥 Leads chauds actifs : ${hotLeads}
-🌤 Leads tièdes actifs : ${warmLeads}
-❄ Leads froids actifs : ${coldLeads}
-
-📋 *TOTAL BASE* : ${totalLeads} leads enregistrés
-
-━━━━━━━━━━━━━━━━
-
-👥 *LEADS ACTIFS AUJOURD'HUI*
-${leadLines || "Aucun lead actif aujourd'hui."}
-
-━━━━━━━━━━━━━━━━
-
-_Bonne soirée à toute l'équipe !_ 🏨✨`;
+_Bonne soirée !_ ✨`;
 
     for (const humanNumber of HOTEL.humanEscalationNumbers) {
       try {
