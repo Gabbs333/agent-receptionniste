@@ -151,11 +151,11 @@ async function handleIncomingMessage(
       },
     });
 
-    // Fetch conversation context (last 25 messages)
+    // Fetch conversation context (last 50 messages)
     const pastMessages = await prisma.message.findMany({
       where: { leadId: lead.id },
       orderBy: { createdAt: "asc" },
-      take: 25,
+      take: 50,
     });
     const context = pastMessages
       .map((m) => `${m.direction}: ${m.content}`)
