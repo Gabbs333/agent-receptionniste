@@ -151,20 +151,30 @@ async function handleIncomingMessage(
       },
     });
 
-    // Fetch conversation context (last 12 messages)
+    // Fetch conversation context (last 25 messages)
     const pastMessages = await prisma.message.findMany({
       where: { leadId: lead.id },
       orderBy: { createdAt: "asc" },
-      take: 12,
+      take: 25,
     });
     const context = pastMessages
       .map((m) => `${m.direction}: ${m.content}`)
       .join("\n");
 
+    // Rappeler à Gloria ce qu'elle sait déjà de ce lead
+    const leadInfo = [
+      lead.name ? `Nom: ${lead.name}` : null,
+      lead.checkIn ? `Check-in: ${new Date(lead.checkIn).toLocaleDateString("fr-FR")}` : null,
+      lead.checkOut ? `Check-out: ${new Date(lead.checkOut).toLocaleDateString("fr-FR")}` : null,
+      lead.guests ? `Personnes: ${lead.guests}` : null,
+      lead.roomType ? `Type chambre: ${lead.roomType}` : null,
+      lead.budget ? `Budget: ${lead.budget.toLocaleString("fr-FR")} FCFA` : null,
+    ].filter(Boolean).join(" | ");
+
     // Analyze with LLM (only for text-based messages)
     let analysis: Awaited<ReturnType<typeof analyzeMessage>> | null = null;
     if (text) {
-      analysis = await analyzeMessage(text, context);
+      analysis = await analyzeMessage(text, context, leadInfo);
     } else {
       // Non-text message: use a simple fallback
       const { getLlmProvider, getDefaultModel } = await import("./llm/index");

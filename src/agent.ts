@@ -85,12 +85,13 @@ RÉPONDS UNIQUEMENT EN JSON VALIDE avec ces champs :
 export async function analyzeMessage(
   text: string,
   context: string,
+  leadInfo?: string,
 ): Promise<Analysis> {
   const llm = getLlmProvider();
   const model = getDefaultModel();
 
   const user = `Historique :
-${context || "(premier message)"}
+${context || "(premier message)"}${leadInfo ? `\n\nInfos déjà collectées sur ce client : ${leadInfo}` : ""}
 
 Message client :
 ${text}`;
