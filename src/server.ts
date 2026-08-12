@@ -306,6 +306,36 @@ _Répondre directement à ce client sur WhatsApp._`;
       },
     });
 
+    // Escalade automatique pour toute réservation confirmée
+    if (analysis?.intent === "reservation" && analysis.checkIn && analysis.checkOut) {
+      const reservationMsg = `🛎 *RÉSERVATION CONFIRMÉE*
+
+👤 ${lead.name ?? "Inconnu"}
+📞 ${phone}
+🛏 ${analysis.roomType ?? "?"}
+📅 ${new Date(analysis.checkIn).toLocaleDateString("fr-FR")} → ${new Date(analysis.checkOut).toLocaleDateString("fr-FR")}
+👥 ${analysis.guests ?? "?"} pers
+💰 ${analysis.budget ? analysis.budget.toLocaleString("fr-FR") + " FCFA" : "?"}
+⭐ Score: ${score}`;
+
+      for (const humanNumber of HOTEL.humanEscalationNumbers) {
+        try {
+          await sendText({ to: humanNumber, body: reservationMsg });
+          console.log(`🛎 Réservation escaladée à ${humanNumber}`);
+        } catch (e) {
+          console.error(`❌ Échec escalade réservation vers ${humanNumber}`);
+        }
+      }
+
+      await prisma.leadEvent.create({
+        data: {
+          leadId: lead.id,
+          type: "reservation_confirmed",
+          payload: JSON.stringify({ checkIn: analysis.checkIn, checkOut: analysis.checkOut, roomType: analysis.roomType, guests: analysis.guests, budget: analysis.budget }),
+        },
+      });
+    }
+
     // Save offer record
     await prisma.offer.create({
       data: {
